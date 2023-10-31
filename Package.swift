@@ -5,17 +5,17 @@ import PackageDescription
 import CompilerPluginSupport
 
 let package = Package(
-    name: "TestMacroPackage",
+    name: "CodableMacroPackage",
     platforms: [.macOS(.v10_15), .iOS(.v13), .tvOS(.v13), .watchOS(.v6), .macCatalyst(.v13)],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
-            name: "TestMacroPackage",
-            targets: ["TestMacroPackage"]
+            name: "CodableMacroPackage",
+            targets: ["CodableMacroPackage"]
         ),
         .executable(
-            name: "TestMacroPackageClient",
-            targets: ["TestMacroPackageClient"]
+            name: "CodableMacroPackageClient",
+            targets: ["CodableMacroPackageClient"]
         ),
     ],
     dependencies: [
@@ -27,7 +27,7 @@ let package = Package(
         // Targets can depend on other targets in this package and products from dependencies.
         // Macro implementation that performs the source transformation of a macro.
         .macro(
-            name: "TestMacroPackageMacros",
+            name: "CodableMacroPackageMacros",
             dependencies: [
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax")
@@ -35,16 +35,16 @@ let package = Package(
         ),
 
         // Library that exposes a macro as part of its API, which is used in client programs.
-        .target(name: "TestMacroPackage", dependencies: ["TestMacroPackageMacros"]),
+        .target(name: "CodableMacroPackage", dependencies: ["CodableMacroPackageMacros"]),
 
         // A client of the library, which is able to use the macro in its own code.
-        .executableTarget(name: "TestMacroPackageClient", dependencies: ["TestMacroPackage"]),
+        .executableTarget(name: "CodableMacroPackageClient", dependencies: ["CodableMacroPackage"]),
 
         // A test target used to develop the macro implementation.
         .testTarget(
-            name: "TestMacroPackageTests",
+            name: "CodableMacroPackageTests",
             dependencies: [
-                "TestMacroPackageMacros",
+                "CodableMacroPackageMacros",
                 .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
             ]
         ),
