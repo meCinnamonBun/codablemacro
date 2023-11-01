@@ -18,7 +18,7 @@ The code below:
 
 ```swift
 @CodableBlock
-struct A {
+struct A: Codable {
 
     @CodableKey("some_name")
     let name: String
@@ -28,7 +28,7 @@ struct A {
     let number: Int
 
     @UncodableKey
-    var numberOfShows: Int
+    var numberOfShows: Int = .zero
 
     var computeStr: String {
         return ""
