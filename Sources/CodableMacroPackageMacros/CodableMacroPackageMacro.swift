@@ -35,9 +35,26 @@ public struct CodableBlockMacro: MemberMacro {
         providingMembersOf declaration: some DeclGroupSyntax,
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
-        let members = declaration.memberBlock.members
+        let enumCases = getEnumCases(for: declaration.memberBlock.members)
 
-        let enumCases = members.compactMap { member -> (String, String?)? in
+        guard !enumCases.isEmpty else {
+            let errorDiagnose = Diagnostic(
+                node: Syntax(node),
+                message: MistakeDiagnostic.empty
+            )
+
+            context.diagnose(errorDiagnose)
+
+            return []
+        }
+
+        let enumSyntax = try generateCodingKeys(by: enumCases)
+
+        return [DeclSyntax(enumSyntax)]
+    }
+
+    private static func getEnumCases(for members: MemberBlockItemListSyntax) -> [(String, String?)] {
+        members.compactMap { member -> (String, String?)? in
             let decl = member.decl.as(VariableDeclSyntax.self)
 
             guard let variableName = decl?.bindings.first?.pattern
@@ -73,19 +90,10 @@ public struct CodableBlockMacro: MemberMacro {
                 return (variableName, nil)
             }
         }
+    }
 
-        guard !enumCases.isEmpty else {
-            let errorDiagnose = Diagnostic(
-                node: Syntax(node),
-                message: MistakeDiagnostic.empty
-            )
-
-            context.diagnose(errorDiagnose)
-
-            return []
-        }
-
-        let enumSyntax = try EnumDeclSyntax("enum CodingKeys: String, CodingKey", membersBuilder: {
+    private static func generateCodingKeys(by enumCases: [(String, String?)]) throws -> EnumDeclSyntax {
+        try EnumDeclSyntax("enum CodingKeys: String, CodingKey", membersBuilder: {
             let stringCases = enumCases.map { name, codingName in
                 guard let codingName else { return "\(Keyword.case) \(name)" }
                 return "\(Keyword.case) \(name) = \"\(codingName)\""
@@ -94,8 +102,6 @@ public struct CodableBlockMacro: MemberMacro {
                 try EnumCaseDeclSyntax("\(raw: stringCase)")
             }
         })
-
-        return [DeclSyntax(enumSyntax)]
     }
 
 }
