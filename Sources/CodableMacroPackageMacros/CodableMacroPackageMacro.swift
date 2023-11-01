@@ -45,17 +45,16 @@ public struct CodableBlockMacro: MemberMacro {
                 return nil
             }
 
-            // ignores computed property
-            guard !(decl?.bindings
-                .as(PatternBindingListSyntax.self)?.first?.accessorBlock?.accessors
-                .is(CodeBlockItemListSyntax.self) ?? false) else {
-                return nil
-            }
-
             guard let attribute = decl?.attributes.first?
                 .as(AttributeSyntax.self),
                let attributeName = attribute.attributeName
                 .as(IdentifierTypeSyntax.self)?.name.text else {
+                // ignores computed property
+                guard !(decl?.bindings
+                    .as(PatternBindingListSyntax.self)?.first?.accessorBlock?.accessors
+                    .is(CodeBlockItemListSyntax.self) ?? false) else {
+                    return nil
+                }
                 return (variableName, nil)
             }
 
