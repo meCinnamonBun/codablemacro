@@ -7,7 +7,7 @@ struct A {
     let name: String
 
     @CodableKey("myFavouriteBool")
-    let t: Bool
+    let bool: Bool
 
     let number: Int
 
