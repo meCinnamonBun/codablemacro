@@ -93,6 +93,66 @@ final class TestMacroPackageTests: XCTestCase {
         #endif
     }
 
+    func testCodableMacroAddComputed() throws {
+        #if canImport(CodableMacroPackageMacros)
+        assertMacroExpansion(
+            """
+            @CodableBlock
+            struct A: Codable {
+
+                @CodableKey("name")
+                let name: String
+
+                @CodableKey("myFavouriteBool")
+                let bool: Bool
+
+                let number: Int
+
+                @UncodableKey
+                var numberOfShows: Int = .zero
+
+                @CodableKey("computeStr")
+                var computeStr: String {
+                    return ""
+                }
+
+            }
+            """,
+            expandedSource: """
+            struct A: Codable {
+
+                @CodableKey("name")
+                let name: String
+
+                @CodableKey("myFavouriteBool")
+                let bool: Bool
+
+                let number: Int
+
+                @UncodableKey
+                var numberOfShows: Int = .zero
+
+                @CodableKey("computeStr")
+                var computeStr: String {
+                    return ""
+                }
+
+                enum CodingKeys: String, CodingKey {
+                    case name
+                    case bool = "myFavouriteBool"
+                    case number
+                    case computeStr
+                }
+
+            }
+            """,
+            macros: testCodabelMacros
+        )
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+
     func testCodableMacroFull() throws {
         #if canImport(CodableMacroPackageMacros)
         assertMacroExpansion(

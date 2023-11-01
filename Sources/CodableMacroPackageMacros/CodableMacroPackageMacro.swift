@@ -45,17 +45,16 @@ public struct CodableBlockMacro: MemberMacro {
                 return nil
             }
 
-            // ignores computed property
-            guard !(decl?.bindings
-                .as(PatternBindingListSyntax.self)?.first?.accessorBlock?.accessors
-                .is(CodeBlockItemListSyntax.self) ?? false) else {
-                return nil
-            }
-
             guard let attribute = decl?.attributes.first?
                 .as(AttributeSyntax.self),
                let attributeName = attribute.attributeName
                 .as(IdentifierTypeSyntax.self)?.name.text else {
+                // ignores computed property
+                guard !(decl?.bindings
+                    .as(PatternBindingListSyntax.self)?.first?.accessorBlock?.accessors
+                    .is(CodeBlockItemListSyntax.self) ?? false) else {
+                    return nil
+                }
                 return (variableName, nil)
             }
 
@@ -65,7 +64,9 @@ public struct CodableBlockMacro: MemberMacro {
                 .as(StringLiteralExprSyntax.self)?.segments.first?
                 .as(StringSegmentSyntax.self)?.content.text {
 
-                return (variableName, variableCodableName)
+                return variableName != variableCodableName
+                ? (variableName, variableCodableName)
+                : (variableName, nil)
             } else if attributeName == "UncodableKey" {
                 return nil
             } else {

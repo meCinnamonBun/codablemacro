@@ -10,7 +10,7 @@ CodableMacroPackage is number of macros which helps to generate CodingKeys witho
 
 ## Important
 - If the name of variable is the same as key there is no need to add `CodableKey`
-- Computed properties are ignored by default
+- Computed properties are ignored by default. You can use `CodableKey(key: String)` on it. But currently macros don't generate `init(from decoder: Decoder)` and `func encode(to encoder: Encoder)`, so you will see Xcode error. This feature will be implemented later
 
 ## Example
 
@@ -18,7 +18,7 @@ The code below:
 
 ```swift
 @CodableBlock
-struct A {
+struct A: Codable {
 
     @CodableKey("some_name")
     let name: String
@@ -28,7 +28,7 @@ struct A {
     let number: Int
 
     @UncodableKey
-    var numberOfShows: Int
+    var numberOfShows: Int = .zero
 
     var computeStr: String {
         return ""
