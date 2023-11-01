@@ -144,6 +144,13 @@ final class TestMacroPackageTests: XCTestCase {
                     case computeStr
                 }
 
+                init(from decoder: Decoder) throws {
+                    let values = try decoder.container(keyedBy: CodingKeys.self)
+                    name = try values.decode(String.self, forKey: .name)
+                    bool = try values.decode(Bool.self, forKey: .bool)
+                    number = try values.decode(Int.self, forKey: .number)
+                }
+
             }
             """,
             macros: testCodabelMacros
