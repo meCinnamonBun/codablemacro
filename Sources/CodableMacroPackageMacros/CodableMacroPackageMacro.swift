@@ -53,8 +53,8 @@ public struct CodableBlockMacro: MemberMacro {
         return [DeclSyntax(enumSyntax)]
     }
 
-    private static func getEnumCases(for members: MemberBlockItemListSyntax) -> [(String, String?)] {
-        members.compactMap { member -> (String, String?)? in
+    private static func getEnumCases(for members: MemberBlockItemListSyntax) -> [EnumCase] {
+        members.compactMap { member -> EnumCase? in
             let decl = member.decl.as(VariableDeclSyntax.self)
 
             guard let variableName = decl?.bindings.first?.pattern
@@ -62,17 +62,21 @@ public struct CodableBlockMacro: MemberMacro {
                 return nil
             }
 
+            let isComputed = decl?.bindings
+                .as(PatternBindingListSyntax.self)?.first?.accessorBlock?.accessors
+                .is(CodeBlockItemListSyntax.self) ?? false
+
             guard let attribute = decl?.attributes.first?
                 .as(AttributeSyntax.self),
                let attributeName = attribute.attributeName
                 .as(IdentifierTypeSyntax.self)?.name.text else {
                 // ignores computed property
-                guard !(decl?.bindings
-                    .as(PatternBindingListSyntax.self)?.first?.accessorBlock?.accessors
-                    .is(CodeBlockItemListSyntax.self) ?? false) else {
-                    return nil
-                }
-                return (variableName, nil)
+                guard !isComputed else { return nil }
+                return EnumCase(
+                    variableName: variableName,
+                    variableCodableName: nil,
+                    isComputed: isComputed
+                )
             }
 
             if attributeName == "CodableKey",
@@ -81,22 +85,38 @@ public struct CodableBlockMacro: MemberMacro {
                 .as(StringLiteralExprSyntax.self)?.segments.first?
                 .as(StringSegmentSyntax.self)?.content.text {
 
-                return variableName != variableCodableName
-                ? (variableName, variableCodableName)
-                : (variableName, nil)
+                if variableName != variableCodableName {
+                    return EnumCase(
+                        variableName: variableName,
+                        variableCodableName: variableCodableName,
+                        isComputed: isComputed
+                    )
+                } else {
+                    return EnumCase(
+                        variableName: variableName,
+                        variableCodableName: nil,
+                        isComputed: isComputed
+                    )
+                }
             } else if attributeName == "UncodableKey" {
                 return nil
             } else {
-                return (variableName, nil)
+                return EnumCase(
+                    variableName: variableName,
+                    variableCodableName: nil,
+                    isComputed: isComputed
+                )
             }
         }
     }
 
-    private static func generateCodingKeys(by enumCases: [(String, String?)]) throws -> EnumDeclSyntax {
+    private static func generateCodingKeys(by enumCases: [EnumCase]) throws -> EnumDeclSyntax {
         try EnumDeclSyntax("enum CodingKeys: String, CodingKey", membersBuilder: {
-            let stringCases = enumCases.map { name, codingName in
-                guard let codingName else { return "\(Keyword.case) \(name)" }
-                return "\(Keyword.case) \(name) = \"\(codingName)\""
+            let stringCases = enumCases.map { enumCase in
+                guard let codingName = enumCase.variableCodableName else {
+                    return "\(Keyword.case) \(enumCase.variableName)"
+                }
+                return "\(Keyword.case) \(enumCase.variableName) = \"\(codingName)\""
             }
             for stringCase in stringCases {
                 try EnumCaseDeclSyntax("\(raw: stringCase)")
@@ -111,6 +131,13 @@ private extension CodableBlockMacro {
     enum MistakeDiagnostic: String {
         case empty
     }
+
+    private struct EnumCase {
+        let variableName: String
+        let variableCodableName: String?
+        let isComputed: Bool
+    }
+
 }
 
 extension CodableBlockMacro.MistakeDiagnostic: DiagnosticMessage {
