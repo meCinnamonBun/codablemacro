@@ -55,7 +55,9 @@ public struct CodableBlockMacro: MemberMacro {
         let shouldGenerateInit = enumCases.contains(where: { $0.isComputed })
         if shouldGenerateInit {
             let initSyntax = try generateInit(by: enumCases)
+            let encodeFuncSyntax = try generateEncode(by: enumCases)
             result.append(DeclSyntax(initSyntax))
+            result.append(DeclSyntax(encodeFuncSyntax))
         }
 
         return result
@@ -139,6 +141,18 @@ public struct CodableBlockMacro: MemberMacro {
                 return "\(enumCase.variableName) = try values.decode(\(enumCase.variableType).self, forKey: .\(enumCase.variableName))"
             }
             try VariableDeclSyntax("let values = try decoder.container(keyedBy: CodingKeys.self)")
+            for stringVariable in stringVariables {
+                ExprSyntax(stringLiteral: stringVariable)
+            }
+        }
+    }
+
+    private static func generateEncode(by enumCases: [EnumCase]) throws -> FunctionDeclSyntax {
+        try FunctionDeclSyntax("func encode(to encoder: Encoder) throws") {
+            let stringVariables = enumCases.compactMap { enumCase -> String in
+                "try container.encode(\(enumCase.variableName), forKey: .\(enumCase.variableName))"
+            }
+            try VariableDeclSyntax("var container = encoder.container(keyedBy: CodingKeys.self)")
             for stringVariable in stringVariables {
                 ExprSyntax(stringLiteral: stringVariable)
             }

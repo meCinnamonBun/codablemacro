@@ -151,6 +151,14 @@ final class TestMacroPackageTests: XCTestCase {
                     number = try values.decode(Int.self, forKey: .number)
                 }
 
+                func encode(to encoder: Encoder) throws {
+                    var container = encoder.container(keyedBy: CodingKeys.self)
+                    try container.encode(name, forKey: .name)
+                    try container.encode(bool, forKey: .bool)
+                    try container.encode(number, forKey: .number)
+                    try container.encode(computeStr, forKey: .computeStr)
+                }
+
             }
             """,
             macros: testCodabelMacros
