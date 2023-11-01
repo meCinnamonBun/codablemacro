@@ -64,7 +64,9 @@ public struct CodableBlockMacro: MemberMacro {
                 .as(StringLiteralExprSyntax.self)?.segments.first?
                 .as(StringSegmentSyntax.self)?.content.text {
 
-                return (variableName, variableCodableName)
+                return variableName != variableCodableName
+                ? (variableName, variableCodableName)
+                : (variableName, nil)
             } else if attributeName == "UncodableKey" {
                 return nil
             } else {
