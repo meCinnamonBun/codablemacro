@@ -10,9 +10,11 @@ CodableMacroPackage is number of macros which helps to generate CodingKeys witho
 
 ## Important
 - If the name of variable is the same as key there is no need to add `CodableKey`
-- Computed properties are ignored by default. You can use `CodableKey(key: String)` on it. But currently macros don't generate `init(from decoder: Decoder)` and `func encode(to encoder: Encoder)`, so you will see Xcode error. This feature will be implemented later
+- Computed properties are ignored by default. You can use `CodableKey(key: String)` on it. Macros will generate `init(from decoder: Decoder)` and `func encode(to encoder: Encoder)`.
 
 ## Example
+
+### 1
 
 The code below:
 
@@ -37,11 +39,65 @@ struct A: Codable {
 }
 ```
 
-generates this CodingKeys:
+generates this `CodingKeys`:
+
 ```swift
 enum CodingKeys: String, CodingKey {
     case name = "some_name"
     case bool = "myFavouriteBool"
     case number
+}
+```
+
+### 2
+
+The code below:
+
+```swift
+@CodableBlock
+struct B: Codable {
+
+    @CodableKey("name")
+    let name: String
+
+    @CodableKey("myFavouriteBool")
+    let bool: Bool
+
+    let number: Int
+
+    @UncodableKey
+    var numberOfShows: Int = .zero
+
+    @CodableKey("computeStr")
+    var computeStr: String {
+        return ""
+    }
+
+}
+```
+
+generates this `CodingKeys`, `init(from decoder: Decoder)` and `func encode(to encoder: Encoder)`:
+
+```swift
+enum CodingKeys: String, CodingKey {
+    case name
+    case bool = "myFavouriteBool"
+    case number
+    case computeStr
+}
+
+init(from decoder: Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    name = try values.decode(String.self, forKey: .name)
+    bool = try values.decode(Bool.self, forKey: .bool)
+    number = try values.decode(Int.self, forKey: .number)
+}
+
+func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encode(name, forKey: .name)
+    try container.encode(bool, forKey: .bool)
+    try container.encode(number, forKey: .number)
+    try container.encode(computeStr, forKey: .computeStr)
 }
 ```
