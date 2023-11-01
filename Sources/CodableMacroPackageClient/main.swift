@@ -15,8 +15,26 @@ struct A: Codable {
     @UncodableKey
     var numberOfShows: Int = .zero
 
+    @CodableKey("computeStr")
     var computeStr: String {
-        return ""
+        return "Some text with \(number)"
+    }
+
+}
+
+extension A {
+
+    init(name: String, bool: Bool, number: Int) {
+        self.name = name
+        self.bool = bool
+        self.number = number
+    }
+
+    init(name: String, bool: Bool, number: Int, numberOfShows: Int) {
+        self.name = name
+        self.bool = bool
+        self.number = number
+        self.numberOfShows = numberOfShows
     }
 
 }
